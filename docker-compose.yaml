@@ -1,0 +1,55 @@
+version: '3.5'
+
+services:
+
+  books-backend:
+    build: .
+    restart: always
+    tty: true
+    working_dir: /var/www/books
+    volumes:
+      - .:/var/www/books
+    container_name: books-backend
+    user: "1000:1000"
+
+  books-nginx:
+    image: nginx:alpine
+    container_name: books-nginx
+    restart: always
+    tty: true
+    environment:
+      - "APPLICATION_UPSTREAM=books-backend:9000"
+    volumes:
+      - ./docker/nginx/conf.d/:/etc/nginx/conf.d/
+      - ./docker/nginx/templates/:/etc/nginx/templates/
+      - ./public/:/var/www/books/public/
+    ports:
+      - "80:80"
+      - "443:443"
+
+  books-postgres:
+    image: postgres:latest
+    container_name: books-postgres
+    restart: always
+    tty: true
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_HOST: books-postgres
+      POSTGRES_DB: books_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: 111111
+      SERVICE_NAME: postgres
+    volumes:
+      - ./docker/postgres/data:/var/lib/postgres/data
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: books-pgadmin
+    restart: always
+    ports:
+      - "8080:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: 111111
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
